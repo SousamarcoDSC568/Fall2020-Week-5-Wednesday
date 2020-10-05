@@ -2,12 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Area Chart</title>
-    <script src="../libs/d3/d3.min.js"></script>
+    <title>Title</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 <body>
-<div style="width: 80%"></div>
+
+<svg id="main" viewBox="0 0 1000 800" width="100%" height="100%"></svg>
 <script>
+
+    let stackedSeries;
+    const loadData = d3.csv("data_sample.csv",
+        function(d,i) {
+
+            return {
+                date: d3.timeParse("%Y-%m")(d.date),
+                EstimatedCost: Number(d.EstimatedCost),
+                RawMaterial: Number(d.RawMaterial),
+                Workmanship: Number(d.Workmanship),
+                YearlyStorage: Number(d.YearlyStorage)}
+        }).then(data =>
+    {
+
+        let stackcolors = [
+            '#53706f',
+            '#5ea5a3',
+            '#96d7ac',
+            '#c6f1d4',
+            '#dcfde5',
+        ];
+
+        let stack = d3.stack()
+            .keys(['EstimatedCost', 'RawMaterial','Workmanship','YearlyStorage']);
+        stackedSeries = stack(data);
+
+        console.log(stackedSeries)
+
+        let svg = d3.select('svg#main')
+        let xMax = d3.max(stackedSeries, function(d){return d3.max(d, function(d){return d[1]})})
+
+        //xMax is the returned max of the col vals, so it also applies as yMax I believe
+        let yScale= d3.scaleLinear().domain([0, xMax]).range([800, 0]);
+
+        //Creating area
+        let area = d3.area()
+            .x(function(d, i) {return i* 100;})
+            .y0(function(d) {return yScale(d[0]);})
+            .y1(function(d) {return yScale(d[1]);});
+
+        //Selecting the path for area
+        svg.selectAll('path')
+            .data(stackedSeries)
+            .enter()
+            .append('path')
+            .style('fill', function(d, i) {return stackcolors[i];})
+            .attr('d', area)
+
+
+    });
+
 
 </script>
 </body>

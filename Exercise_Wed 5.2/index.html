@@ -2,14 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Horizontal Stacked Bar Chart</title>
-    <script src="../libs/d3/d3.min.js"></script>
-
+    <title>Title</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
 </head>
 <body>
-<div style="width: 80%"></div>
+<svg id="main" viewBox="0 0 1000 800" width="100%" height="100%"></svg>
 <script>
+    let stackedSeries;
+    const loadData = d3.csv("data_sample.csv",
+        function(d,i) {
+
+            return {
+                date: d3.timeParse("%Y-%m")(d.date),
+                EstimatedCost: Number(d.EstimatedCost),
+                RawMaterial: Number(d.RawMaterial),
+                Workmanship: Number(d.Workmanship),
+                YearlyStorage: Number(d.YearlyStorage)}
+        }).then(data =>
+    {
+
+        let stackcolors = [
+            '#53706f',
+            '#5ea5a3',
+            '#96d7ac',
+            '#c6f1d4',
+            '#dcfde5',
+        ];
+
+        let stack = d3.stack()
+            .keys(['EstimatedCost', 'RawMaterial','Workmanship','YearlyStorage']);
+        stackedSeries = stack(data);
+        console.log(stackedSeries)
+
+        let svg = d3.select('svg#main')
+        let xMax = d3.max(stackedSeries, function(d){return d3.max(d, function(d){return d[1]})})
+        let xScale = d3.scaleLinear().domain([0,xMax]).range([0,1000])
+        //console.log(xScale(500))
+
+        let groups = svg.selectAll('g')
+            .data(stackedSeries)
+            .enter()
+            .append('g')
+            .style('fill', function(d, i) {
+                return stackcolors[i];
+            });
+
+        groups.selectAll('rect')
+            .data(function(d) {
+                return d;
+            })
+            .enter()
+            .append('rect')
+            .attr('width', function(d) {
+                return xScale(d[1] - d[0]);
+            })
+            .attr('x', function(d) {
+                return xScale(d[0]);
+            })
+            .attr('y', function(d, i) {
+                return i * 20;
+            })
+            .attr('height', 20);
+    });
+
 
 </script>
 </body>
 </html>
+
+
+
+/*
+    d3.csv("data_sample.csv", d3.autoType).then(
+        function (data){
+
+            stackcolors = ['#53706f',
+                '#5ea5a3',
+                '#96d7ac',
+                '#c6f1d4']
+
+            let stack = d3.stack()
+                .keys(['EstimatedCost', 'RawMaterial']);
+
+            let stackedSeries = stack(data);
+
+            let svg = d3.select('svg#main')
+
+            let groups = svg.selectAll('g')
+                .data(data)
+                .enter()
+                .append('g')
+                .style('fill', function(d, i) {
+                    return stackcolors[i];
+                });
+
+            groups.selectAll('rect')
+                .data(function(d) {
+                    return d;
+                })
+                .enter()
+                .append('rect')
+                .attr('width', function(d) {
+                    return d[1] - d[0];
+                })
+                .attr('x', function(d) {
+                    return d[0];
+                })
+                .attr('y', function(d, i) {
+                    return i * 20;
+                })
+                .attr('height', 20);
+
+
+        }
+*/
+
+
+
+
+
+
